@@ -1,11 +1,192 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>PakePlus</title>
-    </head>
-    <body>
-        PakePlus
-    </body>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <!-- 适配webintoapp的核心meta（平台识别用） -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no">
+    <title>ESP01S 灯控</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        body {
+            background: #f5f7fa;
+            padding: 40px 20px;
+            text-align: center;
+            min-height: 100vh;
+        }
+        .title {
+            font-size: 28px;
+            margin-bottom: 15px;
+            color: #1a1a1a;
+            font-weight: 600;
+        }
+        .wifi-info {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 12px;
+            margin: 20px auto;
+            max-width: 340px;
+            color: #0056b3;
+            font-size: 15px;
+            line-height: 1.6;
+            border: 1px solid #d1e7f0;
+        }
+        .status {
+            margin: 30px 0;
+            font-size: 17px;
+            font-weight: 500;
+            min-height: 50px;
+            color: #333;
+            line-height: 1.5;
+        }
+        .btn {
+            width: 100%;
+            max-width: 320px;
+            margin: 15px auto;
+            padding: 22px;
+            font-size: 18px;
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .on {
+            background: #007bff;
+        }
+        .on:hover {
+            background: #0069d9;
+        }
+        .off {
+            background: #dc3545;
+        }
+        .off:hover {
+            background: #c82333;
+        }
+        /* 加载动画（更友好） */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            font-size: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            display: none;
+        }
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #ffffff33;
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="title">ESP01S 灯控系统</div>
+    <div class="wifi-info">
+        📶 WiFi名称：led_666666<br>
+        🔑 WiFi密码：88888888<br>
+        🚫 必须关闭手机流量！
+    </div>
+
+    <div class="status" id="status">✅ 等待操作</div>
+
+    <button class="btn on" onclick="controlLED('ON')">打开 LED</button>
+    <button class="btn off" onclick="controlLED('OFF')">关闭 LED</button>
+
+    <!-- 加载动画层 -->
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+        <div>发送指令中...</div>
+    </div>
+
+<script>
+    const espIP = "http://192.168.4.1";
+    const statusDom = document.getElementById("status");
+    const loadingDom = document.getElementById("loading");
+    let xhr = null; // 复用请求对象，避免重复请求
+
+    // 核心：适配webintoapp的XMLHttpRequest请求（平台可配置权限放行）
+    function controlLED(action) {
+        // 防止重复点击
+        if (loadingDom.style.display === "flex") return;
+
+        // 显示加载动画
+        loadingDom.style.display = "flex";
+        statusDom.innerText = `正在${action === 'ON' ? '打开' : '关闭'}LED...`;
+
+        // 关闭之前的请求（如果有）
+        if (xhr) xhr.abort();
+
+        // 创建请求（webintoapp配置权限后可正常发送）
+        xhr = new XMLHttpRequest();
+        xhr.open("GET", `${espIP}/${action}`, true);
+        xhr.timeout = 3000; // 3秒超时
+
+        // 请求成功
+        xhr.onload = function() {
+            if (xhr.status >= 200 && xhr.status < 400) {
+                statusDom.innerText = `✅ LED ${action === 'ON' ? '已打开' : '已关闭'}\n指令发送成功！`;
+            } else {
+                statusDom.innerText = `⚠️ 指令已发送，ESP返回状态：${xhr.status}`;
+            }
+            loadingDom.style.display = "none";
+        };
+
+        // 请求失败/超时
+        xhr.onerror = function() {
+            statusDom.innerText = `❌ 指令发送失败\n1. 确认关闭手机流量\n2. 重新连接ESP WiFi`;
+            loadingDom.style.display = "none";
+        };
+
+        xhr.ontimeout = function() {
+            statusDom.innerText = `❌ 指令发送超时\nESP可能未开机或WiFi未连接`;
+            loadingDom.style.display = "none";
+        };
+
+        // 发送请求
+        xhr.send();
+    }
+
+    // 页面加载完成初始化
+    window.onload = function() {
+        loadingDom.style.display = "none";
+        // 适配webintoapp的返回键（平台特性）
+        window.addEventListener("popstate", function() {
+            statusDom.innerText = "✅ 等待操作";
+        });
+    };
+
+    // 防止页面退出发送中的请求
+    window.onbeforeunload = function() {
+        if (xhr) xhr.abort();
+    };
+</script>
+</body>
 </html>
