@@ -1,11 +1,261 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>PakePlus</title>
-    </head>
-    <body>
-        PakePlus
-    </body>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>水族灯控制系统</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 0; background: #f5f5f5; color: #333; }
+        .tab-content { display: none; padding: 20px; padding-bottom: 60px;}
+        .tab-content.active { display: block; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: #fff; display: flex; border-top: 1px solid #ddd; }
+        .nav-item { flex: 1; text-align: center; padding: 15px 0; font-size: 14px; color: #666; cursor: pointer;}
+        .nav-item.active { color: #00c800; font-weight: bold; }
+        .card { background: #fff; border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        h3 { text-align: center; color: #662d91; margin-top: 0; }
+        .row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        input[type="text"], input[type="number"] { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 60%; }
+        button { background: #00c800; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; width: 100%; font-size: 16px; margin-top: 10px;}
+        button:active { background: #009900; }
+        button:disabled { background: #ccc; }
+        
+        /* 状态页圆圈 */
+        .circle-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; }
+        .circle { width: 60px; height: 60px; border-radius: 50%; border: 2px solid #ddd; line-height: 60px; font-size: 20px; margin: 0 auto; }
+        
+        /* 滑块样式 */
+        .slider-row { display: flex; align-items: center; margin-bottom: 15px; }
+        .slider-row label { width: 60px; font-size: 14px; }
+        input[type="range"] { flex: 1; margin: 0 10px; }
+        .val-btn { width: 30px; height: 30px; border: 1px solid #ddd; background: #fff; border-radius: 4px; }
+        .val-input { width: 40px; text-align: center; border: none; font-size: 16px;}
+    </style>
+</head>
+<body>
+
+    <!-- 页面1：工作状态 -->
+    <div id="page1" class="tab-content active">
+        <h3 style="color:#333">工作状态</h3>
+        <div class="card">
+            <div class="row" style="font-size: 14px; color: #666;">
+                <span>自动模式</span>
+                <span>24°C</span>
+                <span>风扇: 0%</span>
+                <span id="sys-time">00:00:00</span>
+            </div>
+            <hr style="border:0.5px solid #eee; margin: 15px 0;">
+            <div class="circle-grid" id="status-circles">
+                <!-- JS动态生成 -->
+            </div>
+        </div>
+        <button onclick="readStatus()">读取状态</button>
+    </div>
+
+    <!-- 页面2：参数设置 -->
+    <div id="page2" class="tab-content">
+        <h3 style="color:#333">水族灯控制</h3>
+        <div class="card">
+            <div class="row">
+                <label>时间点</label>
+                <div>
+                    <button class="val-btn" onclick="changeTime(-1)" style="width:auto; margin:0">-</button>
+                    <span id="current-hour" style="margin:0 15px; font-size:18px">0:00</span>
+                    <button class="val-btn" onclick="changeTime(1)" style="width:auto; margin:0">+</button>
+                </div>
+            </div>
+            <div id="sliders-container">
+                <!-- JS动态生成滑块 -->
+            </div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="sendData()">发送数据</button>
+            <button onclick="readData()">读取数据</button>
+        </div>
+    </div>
+
+    <!-- 页面3：系统设置 -->
+    <div id="page3" class="tab-content">
+        <h3>系统设置</h3>
+        <div class="card">
+            <div class="row">
+                <label>通道数量(1-10)</label>
+                <input type="number" id="ch-count" value="8" min="1" max="10" onchange="updateChannelCount()">
+            </div>
+            <div id="ch-names-container">
+                <!-- JS动态生成名称输入框 -->
+            </div>
+        </div>
+
+        <h3>路由器设置</h3>
+        <div class="card">
+            <div class="row">
+                <label>名称:</label>
+                <input type="text" id="wifi-ssid">
+            </div>
+            <div class="row">
+                <label>密码:</label>
+                <input type="text" id="wifi-pass">
+            </div>
+            <button id="btn-wifi" onclick="sendWifi()">发送数据</button>
+        </div>
+    </div>
+
+    <!-- 底部导航 -->
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="switchTab(1)">工作状态</div>
+        <div class="nav-item" onclick="switchTab(2)">参数设置</div>
+        <div class="nav-item" onclick="switchTab(3)">系统设置</div>
+    </div>
+
+<script>
+    // 核心数据结构
+    const ESP_IP = "http://192.168.4.1"; // ESP01S的默认AP IP地址
+    let config = {
+        channelCount: 8,
+        channels: Array.from({length: 10}, (_, i) => ({ name: `通道${i+1}`, color: '#000000' })),
+        schedule: Array.from({length: 10}, () => Array(24).fill(0)), // 10通道x24小时
+        wifiStatus: 'ap_only'
+    };
+    let currentEditHour = 0;
+
+    // 切换标签页
+    function switchTab(tabIndex) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        document.getElementById(`page${tabIndex}`).classList.add('active');
+        document.querySelectorAll('.nav-item')[tabIndex-1].classList.add('active');
+    }
+
+    // 初始化UI
+    function initUI() {
+        updateChannelCount();
+    }
+
+    // 更新通道数量并重绘UI
+    function updateChannelCount() {
+        let count = parseInt(document.getElementById('ch-count').value);
+        if(count < 1) count = 1; if(count > 10) count = 10;
+        config.channelCount = count;
+        
+        // 渲染状态页圆圈
+        let circlesHtml = '';
+        // 渲染参数页滑块
+        let slidersHtml = '';
+        // 渲染系统页名称
+        let namesHtml = '';
+
+        for(let i=0; i<count; i++) {
+            circlesHtml += `<div><div style="font-size:12px;color:#666">${config.channels[i].name}</div><div class="circle" id="circle-val-${i}">0</div></div>`;
+            
+            slidersHtml += `
+            <div class="slider-row">
+                <label>${config.channels[i].name}</label>
+                <input type="range" min="0" max="100" value="${config.schedule[i][currentEditHour]}" id="slider-${i}" oninput="updateSliderVal(${i}, this.value)">
+                <button class="val-btn" onclick="adjSlider(${i}, -1)">-</button>
+                <input type="text" class="val-input" id="val-${i}" value="${config.schedule[i][currentEditHour]}" readonly>
+                <button class="val-btn" onclick="adjSlider(${i}, 1)">+</button>
+            </div>`;
+
+            namesHtml += `
+            <div class="row">
+                <label>通道${i+1}</label>
+                <input type="text" value="${config.channels[i].name}" onchange="config.channels[${i}].name = this.value; updateChannelCount()">
+            </div>`;
+        }
+
+        document.getElementById('status-circles').innerHTML = circlesHtml;
+        document.getElementById('sliders-container').innerHTML = slidersHtml;
+        document.getElementById('ch-names-container').innerHTML = namesHtml;
+    }
+
+    // 切换时间点
+    function changeTime(delta) {
+        currentEditHour += delta;
+        if(currentEditHour < 0) currentEditHour = 23;
+        if(currentEditHour > 23) currentEditHour = 0;
+        document.getElementById('current-hour').innerText = `${currentEditHour}:00`;
+        
+        // 刷新滑块位置
+        for(let i=0; i<config.channelCount; i++) {
+            let val = config.schedule[i][currentEditHour];
+            document.getElementById(`slider-${i}`).value = val;
+            document.getElementById(`val-${i}`).value = val;
+        }
+    }
+
+    // 滑块数值联动
+    function updateSliderVal(ch, val) {
+        document.getElementById(`val-${ch}`).value = val;
+        config.schedule[ch][currentEditHour] = parseInt(val);
+    }
+    function adjSlider(ch, delta) {
+        let val = parseInt(document.getElementById(`slider-${ch}`).value) + delta;
+        if(val < 0) val = 0; if(val > 100) val = 100;
+        document.getElementById(`slider-${ch}`).value = val;
+        updateSliderVal(ch, val);
+    }
+
+    // API交互：读取状态 (对应第一页)
+    async function readStatus() {
+        try {
+            let res = await fetch(`${ESP_IP}/api/status`);
+            let data = await res.json();
+            document.getElementById('sys-time').innerText = data.time;
+            config.wifiStatus = data.wifi;
+            
+            // WiFi连上后禁用WiFi发送按钮
+            document.getElementById('btn-wifi').disabled = (data.wifi === 'connected');
+
+            for(let i=0; i<config.channelCount; i++) {
+                if(data.pwm[i] !== undefined) {
+                    document.getElementById(`circle-val-${i}`).innerText = data.pwm[i];
+                }
+            }
+        } catch (e) {
+            alert("读取失败，请检查手机是否连接到ESP_WiFi或同一路由器！");
+        }
+    }
+
+    // API交互：发送24小时数据给ESP01S记忆
+    async function sendData() {
+        try {
+            await fetch(`${ESP_IP}/api/data`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    channelCount: config.channelCount,
+                    schedule: config.schedule
+                })
+            });
+            alert("数据发送并保存成功！");
+        } catch (e) {
+            alert("发送失败！");
+        }
+    }
+
+    // API交互：发送WiFi密码
+    async function sendWifi() {
+        if(config.wifiStatus === 'connected') {
+            alert("WiFi已连接，无需重复发送");
+            return;
+        }
+        let ssid = document.getElementById('wifi-ssid').value;
+        let pass = document.getElementById('wifi-pass').value;
+        try {
+            await fetch(`${ESP_IP}/api/wifi`, {
+                method: 'POST',
+                body: JSON.stringify({ ssid, pass })
+            });
+            alert("路由器信息已发送，设备正在尝试连接...");
+        } catch (e) {
+            alert("发送失败！");
+        }
+    }
+
+    // 初始化执行
+    initUI();
+    // 每5秒自动读取一次状态
+    setInterval(readStatus, 5000);
+
+</script>
+</body>
 </html>
