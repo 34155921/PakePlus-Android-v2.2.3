@@ -1,11 +1,1349 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>PakePlus</title>
-    </head>
-    <body>
-        PakePlus
-    </body>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>珊瑚灯WX - 网页控制版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background: #f5f5f5;
+            max-width: 480px;
+            margin: 0 auto;
+            padding-bottom: 80px;
+            background-color: #ffffff;
+        }
+
+        .top-bar {
+            text-align: center;
+            padding: 10px 0;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            background-color: #ffffff;
+            position: relative;
+        }
+
+        .top-title {
+            font-size: 18px;
+            color: #333;
+        }
+
+        .mode-control {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: #ffffff;
+        }
+
+        .auto-mode {
+            display: flex;
+            align-items: center;
+        }
+
+        .auto-text {
+            font-size: 16px;
+            color: #333;
+            margin-right: 10px;
+        }
+
+        .toggle-switch {
+            width: 60px;
+            height: 30px;
+            border-radius: 15px;
+            background-color: #00cc00;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            overflow: hidden;
+        }
+
+        .toggle-dot {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background-color: #fff;
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            transition: right 0.3s ease;
+        }
+
+        .toggle-switch.manual {
+            background-color: #cccccc;
+        }
+
+        .toggle-switch.manual .toggle-dot {
+            right: 32px;
+        }
+
+        .time-point {
+            font-size: 16px;
+            color: #0066cc;
+        }
+
+        .time-adjust {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .time-btn {
+            width: 25px;
+            height: 25px;
+            text-align: center;
+            line-height: 25px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #fff;
+        }
+
+        .time-val {
+            font-size: 16px;
+            width: 40px;
+            text-align: center;
+        }
+
+        .shortcut-btns {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background-color: #ffffff;
+            gap: 10px;
+        }
+
+        .shortcut-btn {
+            padding: 8px 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            background-color: #fff;
+            cursor: pointer;
+            flex: 1;
+            text-align: center;
+        }
+
+        .slider-container {
+            padding: 10px 15px;
+            background-color: #ffffff;
+        }
+
+        .slider-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            position: relative;
+            gap: 10px;
+            height: 40px;
+        }
+
+        .slider-name {
+            width: 60px;
+            font-size: 16px;
+            color: #333;
+            flex-shrink: 0;
+        }
+
+        .slider-wrap {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            position: relative;
+            overflow: visible;
+            background-color: #eee;
+            margin-right: 100px;
+            min-width: 100px;
+        }
+
+        .slider-track {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 6px;
+            border-radius: 3px;
+            width: 100%;
+        }
+
+        .slider-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #00cc00;
+            border: 2px solid #ffffff;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            z-index: 15;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            left: 12px;
+        }
+
+        .value-adjust {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 85px;
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            flex-shrink: 0;
+            z-index: 20;
+            background-color: #ffffff;
+            padding: 2px;
+            border-radius: 4px;
+        }
+
+        .val-btn {
+            width: 25px;
+            height: 25px;
+            text-align: center;
+            line-height: 25px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #fff;
+            position: relative;
+            z-index: 21;
+        }
+
+        .val-btn.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            background-color: #f0f0f0;
+        }
+
+        .val-display {
+            font-size: 16px;
+            width: 40px;
+            text-align: center;
+            position: relative;
+            z-index: 21;
+            font-weight: 500;
+        }
+
+        .func-btns {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background-color: #ffffff;
+            gap: 10px;
+        }
+
+        .func-btn {
+            flex: 1;
+            padding: 12px 0;
+            background-color: #00cc00;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .mode-data-container {
+            padding: 0 15px 15px;
+            background-color: #ffffff;
+        }
+
+        .mode-data-btns {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+
+        .mode-data-btn {
+            flex: 1;
+            padding: 15px 0;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .mode-data-btn.active {
+            color: #cc0000;
+            font-weight: bold;
+        }
+
+        .dropdown-menu {
+            display: none;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-top: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 12px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item.active {
+            color: #cc0000;
+            font-weight: bold;
+        }
+
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background-color: #ffffff;
+            border-top: 1px solid #e0e0e0;
+            max-width: 480px;
+            margin: 0 auto;
+            z-index: 9999;
+        }
+
+        .tab-item {
+            text-align: center;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .tab-active {
+            color: #cc0000;
+            font-weight: bold;
+        }
+
+        .tab-normal {
+            color: #009933;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        #page0 .header {
+            text-align: center;
+            padding: 15px 0;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        #page0 .header-title {
+            color: #6600cc;
+            font-size: 20px;
+        }
+
+        #page0 .status-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            font-size: 14px;
+            color: #666;
+            background-color: #ffffff;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        #page0 .channel-container {
+            padding: 15px;
+            background-color: #ffffff;
+        }
+
+        #page0 .channel-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 25px;
+            gap: 10px;
+            width: 100%;
+        }
+
+        #page0 .channel-item {
+            text-align: center;
+            flex: 0 0 calc(25% - 10px);
+            max-width: 80px;
+            min-width: 60px;
+        }
+
+        #page0 .channel-name {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #page0 .circle-wrapper {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        #page0 .circle-outer {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: conic-gradient(var(--channel-color, #00cc00) var(--progress, 0%), #e0e0e0 0%);
+            position: relative;
+        }
+
+        #page0 .circle-outer::after {
+            content: '';
+            position: absolute;
+            width: 85%;
+            height: 85%;
+            border-radius: 50%;
+            background-color: #fff;
+        }
+
+        #page0 .circle-inner {
+            font-size: 18px;
+            color: #666;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+        }
+
+        #page0 .read-btn {
+            width: 90%;
+            height: 60px;
+            line-height: 60px;
+            background-color: #00cc00;
+            color: #fff;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 5px;
+            margin: 0 auto;
+            cursor: pointer;
+            border: none;
+            display: block;
+        }
+
+        #page2 {
+            padding: 10px 15px;
+        }
+
+        #page2 .section-title {
+            font-size: 20px;
+            color: #6600cc;
+            text-align: center;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        #page2 .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 18px;
+        }
+
+        #page2 .setting-label {
+            color: #333;
+        }
+
+        #page2 .setting-input {
+            color: #333;
+            font-size: 18px;
+            padding: 8px 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            width: 120px;
+            text-align: right;
+            font-weight: 500;
+            background-color: #f9f9f9;
+            outline: none;
+        }
+
+        #page2 .setting-input.router-input {
+            width: 180px;
+            text-align: left;
+        }
+
+        .channel-save-btn {
+            padding: 8px 16px;
+            background-color: #00cc00;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        input[type=number]::-webkit-outer-spin-button,
+        input[type=number]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        #page2 .btn-large {
+            width: 100%;
+            height: 60px;
+            line-height: 60px;
+            background-color: #00cc00;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            cursor: pointer;
+            display: block;
+        }
+
+        #page2 .router-section {
+            margin-top: 30px;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 15px;
+        }
+
+        .channel-name-section {
+            padding: 15px;
+            background-color: #fff;
+            border-top: 1px solid #eee;
+            margin-top: 10px;
+        }
+        .channel-name-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #6600cc;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .name-row {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            gap: 8px;
+        }
+        .name-label {
+            width: 60px;
+            font-size: 14px;
+            color: #333;
+        }
+        .name-input {
+            flex: 1;
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            user-select: text;
+            outline: none;
+        }
+        .color-picker {
+            width: 40px;
+            height: 36px;
+            border: none;
+            cursor: pointer;
+            background: transparent;
+        }
+        .channel-count-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page active" id="page0">
+    <div class="header">
+        <div class="header-title">工作状态</div>
+    </div>
+    <div class="status-bar">
+        <span id="modeStatus">自动模式</span>
+        <span id="tempStatus">23℃/24℃</span>
+        <span id="fanStatus">风扇:0%</span>
+        <span id="realTime">12:12:12</span>
+    </div>
+    <div class="channel-container" id="statusChannelContainer">
+        <button class="read-btn" onclick="readStatus()">读取状态</button>
+    </div>
+    <div class="tab-bar">
+        <div class="tab-item tab-active" onclick="switchTab(0)">工作状态</div>
+        <div class="tab-item tab-normal" onclick="switchTab(1)">参数设置</div>
+        <div class="tab-item tab-normal" onclick="switchTab(2)">系统设置</div>
+    </div>
+</div>
+
+<div class="page" id="page1">
+    <div class="top-bar">
+        <div class="top-title">水族灯控制系统</div>
+    </div>
+    <div class="mode-control">
+        <div class="auto-mode">
+            <div class="auto-text" id="modeText">自动模式</div>
+            <div class="toggle-switch" id="autoToggle" onclick="toggleMode()">
+                <div class="toggle-dot"></div>
+            </div>
+        </div>
+        <div class="time-point">时间点 <span id="timePointText">0:00</span></div>
+        <div class="time-adjust">
+            <div class="time-btn" id="timeMinusBtn" onclick="adjustTime(-1)">-</div>
+            <div class="time-val" id="timeVal">0</div>
+            <div class="time-btn" id="timePlusBtn" onclick="adjustTime(1)">+</div>
+        </div>
+    </div>
+    <div class="shortcut-btns">
+        <button class="shortcut-btn" onclick="scalePower('plus')">功率×1.1</button>
+        <button class="shortcut-btn" onclick="scalePower('minus')">功率×0.9</button>
+    </div>
+    <div class="slider-container" id="sliderContainer"></div>
+
+    <div class="func-btns">
+        <button class="func-btn" onclick="sendData()">发送数据</button>
+        <button class="func-btn" onclick="readData()">读取数据</button>
+        <button class="func-btn" onclick="autoPreview()">自动模式预览</button>
+    </div>
+    <div class="mode-data-container">
+        <div class="mode-data-btns">
+            <button class="mode-data-btn" onclick="toggleDropdown('loadMenu')">加载模式数据</button>
+            <button class="mode-data-btn" onclick="toggleDropdown('saveMenu')">保存模式数据</button>
+        </div>
+        <div class="dropdown-menu" id="loadMenu">
+            <div class="dropdown-item" onclick="selectLoadMode(this)">LPS模式数据</div>
+            <div class="dropdown-item" onclick="selectLoadMode(this)">SPS模式数据</div>
+            <div class="dropdown-item active" onclick="selectLoadMode(this)">爆藻模式数据</div>
+            <div class="dropdown-item" onclick="selectLoadMode(this)">自定义A数据</div>
+            <div class="dropdown-item" onclick="selectLoadMode(this)">自定义B数据</div>
+            <div class="dropdown-item" onclick="selectLoadMode(this)">自定义C数据</div>
+            <div class="dropdown-item" onclick="selectLoadMode(this)">自定义D数据</div>
+        </div>
+        <div class="dropdown-menu" id="saveMenu">
+            <div class="dropdown-item" onclick="selectSaveMode(this)">自定义A数据</div>
+            <div class="dropdown-item" onclick="selectSaveMode(this)">自定义B数据</div>
+            <div class="dropdown-item" onclick="selectSaveMode(this)">自定义C数据</div>
+            <div class="dropdown-item" onclick="selectSaveMode(this)">自定义D数据</div>
+            <div class="dropdown-item active" onclick="selectSaveMode(this)">不保存数据</div>
+        </div>
+    </div>
+    <div class="tab-bar">
+        <div class="tab-item tab-normal" onclick="switchTab(0)">工作状态</div>
+        <div class="tab-item tab-active" onclick="switchTab(1)">参数设置</div>
+        <div class="tab-item tab-normal" onclick="switchTab(2)">系统设置</div>
+    </div>
+</div>
+
+<div class="page" id="page2">
+    <div class="section-title">系统设置</div>
+    <div class="setting-item">
+        <div class="setting-label">风扇启动温度(℃)</div>
+        <input type="number" class="setting-input" id="fanTempVal" value="38" min="0" max="100">
+    </div>
+    <div class="setting-item">
+        <div class="setting-label">风扇启动转速(%)</div>
+        <input type="number" class="setting-input" id="fanSpeedVal" value="50" min="0" max="100" step="5">
+    </div>
+    <div class="setting-item">
+        <div class="setting-label">热保护启动温度(℃)</div>
+        <input type="number" class="setting-input" id="heatProtectVal" value="58" min="0" max="100">
+    </div>
+
+    <div class="setting-item">
+        <div class="setting-label">通道总数量</div>
+        <div class="channel-count-row">
+            <input type="number" class="setting-input" id="channelCountVal" value="8" min="1" max="10">
+            <button class="channel-save-btn" onclick="saveChannelCountManual()">保存</button>
+        </div>
+    </div>
+
+    <button class="btn-large" onclick="sendSystemData()">发送数据并校时</button>
+    <button class="btn-large" onclick="readSystemData()">读取数据</button>
+
+    <div class="channel-name-section">
+        <div class="channel-name-title">通道自定义名称 & 颜色</div>
+        <div id="channelNameList"></div>
+        <button class="btn-large" style="height:44px;line-height:44px;font-size:16px;margin-top:12px" onclick="saveAllChannelNames()">保存所有通道设置</button>
+    </div>
+
+    <div class="router-section">
+        <div class="section-title">路由器设置</div>
+        <div class="setting-item">
+            <div class="setting-label">路由器名称:</div>
+            <input type="text" class="setting-input router-input" id="routerName" value="Shanhu-1-9">
+        </div>
+        <div class="setting-item">
+            <div class="setting-label">路由器密码:</div>
+            <input type="text" class="setting-input router-input" id="routerPwd" value="hygy1234">
+        </div>
+        <button class="btn-large" onclick="sendRouterData()">发送数据</button>
+    </div>
+
+    <div class="tab-bar">
+        <div class="tab-item tab-normal" onclick="switchTab(0)">工作状态</div>
+        <div class="tab-item tab-normal" onclick="switchTab(1)">参数设置</div>
+        <div class="tab-item tab-active" onclick="switchTab(2)">系统设置</div>
+    </div>
+</div>
+
+<script>
+const MAX_CHANNELS = 10;
+let channelCount = 8;
+let channels = [];
+let channelColors = ["#dcdcdc","#87cefa","#ee82ee","#00cc66","#e6e6fa","#0000cd","#ff3333","#ffff99","#ff6600","#9933ff"];
+const allChannelKeys = ['ch1','ch2','ch3','ch4','ch5','ch6','ch7','ch8','ch9','ch10'];
+const defaultNames = {ch1:'通道1',ch2:'通道2',ch3:'通道3',ch4:'通道4',ch5:'通道5',ch6:'通道6',ch7:'通道7',ch8:'通道8',ch9:'通道9',ch10:'通道10'};
+
+const defaultPresetModes = {
+    'LPS模式数据':{},'SPS模式数据':{},'爆藻模式数据':{},
+    '自定义A数据':{},'自定义B数据':{},'自定义C数据':{},'自定义D数据':{}
+};
+
+const defaultSystemSettings = {
+    fanTemp:38,fanSpeed:50,heatProtect:58,channelCount:8,
+    routerName:'Shanhu-1-9',routerPwd:'hygy1234'
+};
+
+let hourData = [];
+let currentHour = 0;
+let isAutoMode = true;
+let previewVals = {};
+// ESP8266 IP地址（需替换为实际IP）
+const ESP_IP = "192.168.4.1"; 
+
+// 本地存储封装
+function saveToLocal(key,data){
+    try{
+        localStorage.setItem(key, JSON.stringify(data));
+    }catch(e){
+        console.error('保存数据失败:', e);
+        alert('数据保存失败：' + e.message);
+    }
+}
+
+function getFromLocal(key,def){
+    try{
+        const data = localStorage.getItem(key);
+        return data ? JSON.parse(data) : def;
+    }catch(e){
+        console.error('读取数据失败:', e);
+        return def;
+    }
+}
+
+// 保存通道数量
+function saveChannelCountManual(){
+    const inputVal = parseInt(document.getElementById('channelCountVal').value) || 8;
+    channelCount = Math.max(1, Math.min(MAX_CHANNELS, inputVal));
+    const sys = getFromLocal('coralLightSystem', defaultSystemSettings);
+    sys.channelCount = channelCount;
+    saveToLocal('coralLightSystem', sys);
+    initDynamicChannels();
+    saveHourDataToLocal();
+    renderAllPages();
+    alert('通道数量已保存，当前通道数：' + channelCount);
+}
+
+function initDynamicChannels(){
+    channels = [];
+    for(let i=1;i<=channelCount;i++) channels.push('ch'+i);
+    let empty = {};
+    channels.forEach(ch=>empty[ch]=83);
+    for(let m in defaultPresetModes) defaultPresetModes[m] = {...empty};
+    const savedHourData = getFromLocal('coralLightHourData', []);
+    if(savedHourData.length === 24 && savedHourData[0]){
+        hourData = savedHourData;
+    }else{
+        hourData = Array(24).fill().map(()=>({...empty}));
+    }
+    previewVals = {...hourData[currentHour]};
+}
+
+// 页面加载初始化
+window.onload=function(){
+    updateRealTime();
+    setInterval(updateRealTime,1000);
+    const sys = getFromLocal('coralLightSystem', defaultSystemSettings);
+    channelCount = sys.channelCount || 8;
+    document.getElementById('channelCountVal').value = channelCount;
+    initDynamicChannels();
+    loadAllData();
+    setTimeout(renderAllPages, 0);
+}
+
+function loadAllData(){
+    loadHourDataFromLocal();
+    loadSystemSettings();
+    loadChannelNamesFromLocal();
+    loadChannelColorsFromLocal();
+}
+
+function renderAllPages(){
+    renderStatusPage();
+    renderSliderPage();
+    renderChannelNameInputs();
+    loadVals(previewVals);
+    updateValBtnStates();
+}
+
+// 渲染工作状态页
+function renderStatusPage(){
+    const container = document.getElementById('statusChannelContainer');
+    const readBtn = container.querySelector('.read-btn');
+    container.innerHTML = '';
+    const names = getFromLocal('coralLightChannelNames', defaultNames);
+    const customColors = getFromLocal('coralLightChannelColors', {});
+    let row = document.createElement('div');
+    row.className = 'channel-row';
+    let count = 0;
+    channels.forEach((ch, i) => {
+        if(count >= 4){
+            container.appendChild(row);
+            row = document.createElement('div');
+            row.className = 'channel-row';
+            count = 0;
+        }
+        const channelName = names[ch] || defaultNames[ch];
+        const progressVal = previewVals[ch] || 0;
+        const channelColor = customColors[ch] || channelColors[i % channelColors.length];
+        row.innerHTML += `
+        <div class="channel-item">
+            <div class="channel-name" id="label-${ch}">${channelName}</div>
+            <div class="circle-wrapper">
+                <div class="circle-outer" id="circle-${ch}" style="--progress: ${progressVal}%; --channel-color: ${channelColor}">
+                    <div class="circle-inner" id="val-${ch}">${progressVal}</div>
+                </div>
+            </div>
+        </div>`;
+        count++;
+    });
+    container.appendChild(row);
+    if(readBtn) container.appendChild(readBtn);
+}
+
+// 渲染参数设置页滑块
+function renderSliderPage(){
+    const container = document.getElementById('sliderContainer');
+    container.innerHTML = '';
+    const names = getFromLocal('coralLightChannelNames', defaultNames);
+    const customColors = getFromLocal('coralLightChannelColors', {});
+    channels.forEach((ch, i) => {
+        const channelColor = customColors[ch] || channelColors[i % channelColors.length];
+        const channelName = names[ch] || defaultNames[ch];
+        const val = previewVals[ch] || 83;
+        const minusDisabled = val <= 0 ? 'disabled' : '';
+        const plusDisabled = val >= 100 ? 'disabled' : '';
+        container.innerHTML += `
+        <div class="slider-item">
+            <div class="slider-name">${channelName}</div>
+            <div class="slider-wrap" id="wrap-${ch}">
+                <div class="slider-track" id="track-${ch}" style="width:${val}%;background:${channelColor}"></div>
+                <div class="slider-thumb" id="thumb-${ch}" style="left:calc(${val}% - 12px)" onmousedown="startDrag(event,'${ch}')" ontouchstart="startDrag(event,'${ch}')"></div>
+            </div>
+            <div class="value-adjust">
+                <div class="val-btn ${minusDisabled}" id="minus-${ch}" onclick="adjustVal('${ch}',-1)">-</div>
+                <div class="val-display" id="disp-${ch}">${val}</div>
+                <div class="val-btn ${plusDisabled}" id="plus-${ch}" onclick="adjustVal('${ch}',1)">+</div>
+            </div>
+        </div>`;
+    });
+    // 绑定拖动事件
+    document.addEventListener('mousemove', dragHandler);
+    document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('touchmove', dragHandler);
+    document.addEventListener('touchend', stopDrag);
+}
+
+// 渲染通道名称和颜色设置
+function renderChannelNameInputs(){
+    const list = document.getElementById('channelNameList');
+    list.innerHTML = '';
+    const savedNames = getFromLocal('coralLightChannelNames', defaultNames);
+    const savedColors = getFromLocal('coralLightChannelColors', {});
+    channels.forEach((ch, i) => {
+        const channelName = savedNames[ch] || defaultNames[ch];
+        const channelColor = savedColors[ch] || channelColors[i % channelColors.length];
+        list.innerHTML += `
+        <div class="name-row">
+            <div class="name-label">通道${i+1}</div>
+            <input type="text" class="name-input" id="name-${ch}" value="${channelName}">
+            <input type="color" class="color-picker" id="color-${ch}" value="${channelColor}">
+        </div>`;
+    });
+}
+
+// 保存通道名称和颜色
+function saveAllChannelNames(){
+    const allNames = getFromLocal('coralLightChannelNames', {...defaultNames});
+    const allColors = getFromLocal('coralLightChannelColors', {});
+    channels.forEach(ch => {
+        const nameInput = document.getElementById('name-'+ch);
+        const colorInput = document.getElementById('color-'+ch);
+        if(nameInput){
+            const inputVal = nameInput.value.trim();
+            allNames[ch] = inputVal || defaultNames[ch];
+        }
+        if(colorInput){
+            allColors[ch] = colorInput.value;
+        }
+    });
+    saveToLocal('coralLightChannelNames', allNames);
+    saveToLocal('coralLightChannelColors', allColors);
+    renderAllPages();
+    alert('通道名称与颜色已成功保存！');
+}
+
+function loadChannelColorsFromLocal(){
+    const savedColors = getFromLocal('coralLightChannelColors', {});
+}
+
+// 更新实时时间
+function updateRealTime(){
+    const d = new Date();
+    const h = String(d.getHours()).padStart(2,'0');
+    const m = String(d.getMinutes()).padStart(2,'0');
+    const s = String(d.getSeconds()).padStart(2,'0');
+    const realTimeEl = document.getElementById('realTime');
+    if(realTimeEl) realTimeEl.innerText = `${h}:${m}:${s}`;
+}
+
+// 切换Tab页
+function switchTab(targetIndex){
+    document.querySelectorAll('.page').forEach((page, index) => {
+        page.classList.toggle('active', index === targetIndex);
+        if(index === 1) updateValBtnStates();
+    });
+    document.querySelectorAll('.tab-bar').forEach(bar => {
+        bar.querySelectorAll('.tab-item').forEach((item, idx) => {
+            if(idx === targetIndex) {
+                item.classList.remove('tab-normal');
+                item.classList.add('tab-active');
+            } else {
+                item.classList.remove('tab-active');
+                item.classList.add('tab-normal');
+            }
+        });
+    });
+}
+
+// 调整时间点
+function adjustTime(s){
+    hourData[currentHour] = {...previewVals};
+    currentHour = (currentHour + s + 24) % 24;
+    document.getElementById('timeVal').innerText = currentHour;
+    document.getElementById('timePointText').innerText = `${currentHour}:00`;
+    loadVals(hourData[currentHour]);
+    updateValBtnStates();
+}
+
+// 调整通道功率
+function adjustVal(ch, s){
+    let v = previewVals[ch] + s;
+    v = Math.max(0, Math.min(100, v));
+    previewVals[ch] = v;
+    updateSlider(ch, v);
+    updateValBtnStates();
+}
+
+// 批量调整功率
+function scalePower(type){
+    const scale = type === 'plus' ? 1.1 : 0.9;
+    channels.forEach(ch => {
+        let v = Math.round(previewVals[ch] * scale);
+        v = Math.max(0, Math.min(100, v));
+        previewVals[ch] = v;
+        updateSlider(ch, v);
+    });
+    updateValBtnStates();
+}
+
+// 更新滑块显示
+function updateSlider(ch, v){
+    const displayEl = document.getElementById('disp-'+ch);
+    const trackEl = document.getElementById('track-'+ch);
+    const thumbEl = document.getElementById('thumb-'+ch);
+    const circleEl = document.getElementById('circle-'+ch);
+    const customColors = getFromLocal('coralLightChannelColors', {});
+    const idx = channels.indexOf(ch);
+    const color = customColors[ch] || channelColors[idx % channelColors.length];
+
+    if(displayEl) displayEl.innerText = v;
+    const percentage = Math.min(v, 100);
+    if(trackEl) trackEl.style.width = `${percentage}%`;
+    if(thumbEl) thumbEl.style.left = `calc(${percentage}% - 12px)`;
+    if(circleEl) {
+        circleEl.style.setProperty('--progress', `${percentage}%`);
+        circleEl.style.setProperty('--channel-color', color);
+    }
+    sync(ch);
+}
+
+// 更新按钮禁用状态
+function updateValBtnStates(){
+    channels.forEach(ch => {
+        const val = previewVals[ch] || 0;
+        const minusBtn = document.getElementById(`minus-${ch}`);
+        const plusBtn = document.getElementById(`plus-${ch}`);
+        if(minusBtn) minusBtn.classList.toggle('disabled', val <= 0);
+        if(plusBtn) plusBtn.classList.toggle('disabled', val >= 100);
+    });
+}
+
+// 加载功率值
+function loadVals(v){
+    previewVals = {...v};
+    channels.forEach(ch => {
+        updateSlider(ch, previewVals[ch]);
+        sync(ch);
+    });
+    updateValBtnStates();
+}
+
+// 同步状态页显示
+function sync(ch){
+    const valEl = document.getElementById('val-'+ch);
+    const circleEl = document.getElementById('circle-'+ch);
+    const val = previewVals[ch] || 0;
+    if(valEl) valEl.innerText = val;
+    if(circleEl) circleEl.style.setProperty('--progress', `${val}%`);
+}
+
+// 切换自动/手动模式
+function toggleMode(){
+    isAutoMode = !isAutoMode;
+    const toggleEl = document.getElementById('autoToggle');
+    const modeTextEl = document.getElementById('modeText');
+    const modeStatusEl = document.getElementById('modeStatus');
+    if(isAutoMode){
+        toggleEl.classList.remove('manual');
+        modeTextEl.innerText = '自动模式';
+        modeStatusEl.innerText = '自动模式';
+    }else{
+        toggleEl.classList.add('manual');
+        modeTextEl.innerText = '手动模式';
+        modeStatusEl.innerText = '手动模式';
+    }
+}
+
+// 下拉菜单切换
+function toggleDropdown(id){
+    const menu = document.getElementById(id);
+    document.querySelectorAll('.dropdown-menu').forEach(menuEl => {
+        if(menuEl !== menu) menuEl.classList.remove('show');
+    });
+    menu.classList.toggle('show');
+}
+
+// 加载模式数据
+function selectLoadMode(el){
+    document.querySelectorAll('#loadMenu .dropdown-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    el.classList.add('active');
+    const modes = getFromLocal('coralLightModes', defaultPresetModes);
+    const modeData = modes[el.innerText] || {};
+    loadVals(modeData);
+}
+
+// 保存模式数据
+function selectSaveMode(el){
+    document.querySelectorAll('#saveMenu .dropdown-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    el.classList.add('active');
+    const modeName = el.innerText;
+    if(modeName !== '不保存数据'){
+        const modes = getFromLocal('coralLightModes', defaultPresetModes);
+        modes[modeName] = {...previewVals};
+        saveToLocal('coralLightModes', modes);
+        alert(`已保存【${modeName}】`);
+    }
+}
+
+// 小时数据本地存储
+function saveHourDataToLocal(){
+    saveToLocal('coralLightHourData', hourData);
+}
+
+function loadHourDataFromLocal(){
+    const saved = getFromLocal('coralLightHourData', []);
+    if(saved.length === 24) hourData = saved;
+}
+
+// 加载系统设置
+function loadSystemSettings(){
+    const sys = getFromLocal('coralLightSystem', defaultSystemSettings);
+    document.getElementById('fanTempVal').value = sys.fanTemp || 38;
+    document.getElementById('fanSpeedVal').value = sys.fanSpeed || 50;
+    document.getElementById('heatProtectVal').value = sys.heatProtect || 58;
+    document.getElementById('routerName').value = sys.routerName || 'Shanhu-1-9';
+    document.getElementById('routerPwd').value = sys.routerPwd || 'hygy1234';
+}
+
+// 加载通道名称
+function loadChannelNamesFromLocal(){
+    const names = getFromLocal('coralLightChannelNames', defaultNames);
+    channels.forEach(ch => {
+        const input = document.getElementById('name-'+ch);
+        if(input) input.value = names[ch] || defaultNames[ch];
+    });
+}
+
+// 自动模式预览
+function autoPreview(){
+    alert('自动模式预览已启动，将按24小时时间轴自动切换功率！');
+    let previewHour = 0;
+    const previewInterval = setInterval(() => {
+        previewHour = (previewHour + 1) % 24;
+        loadVals(hourData[previewHour]);
+        document.getElementById('timePointText').innerText = `${previewHour}:00`;
+        document.getElementById('timeVal').innerText = previewHour;
+    }, 1000);
+    setTimeout(() => {
+        clearInterval(previewInterval);
+        loadVals(hourData[currentHour]);
+        document.getElementById('timePointText').innerText = `${currentHour}:00`;
+        document.getElementById('timeVal').innerText = currentHour;
+        alert('自动模式预览结束！');
+    }, 24000);
+}
+
+// 拖动滑块相关变量
+let draggingCh = null;
+function startDrag(e, ch){
+    e.preventDefault();
+    draggingCh = ch;
+}
+
+function dragHandler(e){
+    if(!draggingCh) return;
+    e.preventDefault();
+    const wrapEl = document.getElementById('wrap-'+draggingCh);
+    const rect = wrapEl.getBoundingClientRect();
+    let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    let percent = (clientX - rect.left) / rect.width * 100;
+    percent = Math.max(0, Math.min(100, percent));
+    const val = Math.round(percent);
+    previewVals[draggingCh] = val;
+    updateSlider(draggingCh, val);
+    updateValBtnStates();
+}
+
+function stopDrag(){
+    draggingCh = null;
+}
+
+// ========== 与ESP8266通信相关方法 ==========
+// 读取硬件状态
+async function readStatus(){
+    try {
+        const response = await fetch(`http://${ESP_IP}/getStatus`);
+        if(!response.ok) throw new Error('通信失败');
+        const data = await response.json();
+        // 更新功率值
+        previewVals = data.channelPower || previewVals;
+        // 更新温度和风扇状态
+        document.getElementById('tempStatus').innerText = `${data.temp}℃/${data.heatProtect}℃`;
+        document.getElementById('fanStatus').innerText = `风扇:${data.fanSpeed}%`;
+        // 更新模式状态
+        isAutoMode = data.isAutoMode;
+        const toggleEl = document.getElementById('autoToggle');
+        const modeTextEl = document.getElementById('modeText');
+        const modeStatusEl = document.getElementById('modeStatus');
+        if(isAutoMode){
+            toggleEl.classList.remove('manual');
+            modeTextEl.innerText = '自动模式';
+            modeStatusEl.innerText = '自动模式';
+        }else{
+            toggleEl.classList.add('manual');
+            modeTextEl.innerText = '手动模式';
+            modeStatusEl.innerText = '手动模式';
+        }
+        // 重新渲染页面
+        renderAllPages();
+        alert('读取硬件状态成功！');
+    } catch (error) {
+        console.error('读取状态失败:', error);
+        alert('读取硬件状态失败，请检查ESP8266是否在线！');
+    }
+}
+
+// 发送通道功率数据
+async function sendData(){
+    try {
+        const sendData = {
+            channelPower: previewVals,
+            isAutoMode: isAutoMode,
+            currentHour: currentHour
+        };
+        const response = await fetch(`http://${ESP_IP}/setParams`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(sendData)
+        });
+        const result = await response.json();
+        if(result.success){
+            alert('数据发送成功！');
+            // 保存到本地
+            hourData[currentHour] = {...previewVals};
+            saveHourDataToLocal();
+        }else{
+            alert('数据发送失败：' + result.msg);
+        }
+    } catch (error) {
+        console.error('发送数据失败:', error);
+        alert('发送数据失败，请检查ESP8266是否在线！');
+    }
+}
+
+// 读取通道功率数据
+async function readData(){
+    try {
+        const response = await fetch(`http://${ESP_IP}/getParams`);
+        if(!response.ok) throw new Error('通信失败');
+        const data = await response.json();
+        previewVals = data.channelPower || previewVals;
+        currentHour = data.currentHour || currentHour;
+        isAutoMode = data.isAutoMode;
+        document.getElementById('timeVal').innerText = currentHour;
+        document.getElementById('timePointText').innerText = `${currentHour}:00`;
+        toggleMode(); // 同步模式显示
+        renderAllPages();
+        alert('读取参数成功！');
+    } catch (error) {
+        console.error('读取参数失败:', error);
+        alert('读取参数失败，请检查ESP8266是否在线！');
+    }
+}
+
+// 发送系统设置数据
+async function sendSystemData(){
+    try {
+        const sysData = {
+            fanTemp: parseInt(document.getElementById('fanTempVal').value) || 38,
+            fanSpeed: parseInt(document.getElementById('fanSpeedVal').value) || 50,
+            heatProtect: parseInt(document.getElementById('heatProtectVal').value) || 58,
+            channelCount: channelCount,
+            // 校时数据
+            time: new Date().toISOString()
+        };
+        const response = await fetch(`http://${ESP_IP}/setSystem`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(sysData)
+        });
+        const result = await response.json();
+        if(result.success){
+            // 保存到本地
+            const sys = getFromLocal('coralLightSystem', defaultSystemSettings);
+            sys.fanTemp = sysData.fanTemp;
+            sys.fanSpeed = sysData.fanSpeed;
+            sys.heatProtect = sysData.heatProtect;
+            sys.channelCount = sysData.channelCount;
+            saveToLocal('coralLightSystem', sys);
+            alert('系统数据发送并校时成功！');
+        }else{
+            alert('系统数据发送失败：' + result.msg);
+        }
+    } catch (error) {
+        console.error('发送系统数据失败:', error);
+        alert('发送系统数据失败，请检查ESP8266是否在线！');
+    }
+}
+
+// 读取系统设置数据
+async function readSystemData(){
+    try {
+        const response = await fetch(`http://${ESP_IP}/getSystem`);
+        if(!response.ok) throw new Error('通信失败');
+        const data = await response.json();
+        document.getElementById('fanTempVal').value = data.fanTemp || 38;
+        document.getElementById('fanSpeedVal').value = data.fanSpeed || 50;
+        document.getElementById('heatProtectVal').value = data.heatProtect || 58;
+        document.getElementById('channelCountVal').value = data.channelCount || 8;
+        // 保存到本地
+        const sys = getFromLocal('coralLightSystem', defaultSystemSettings);
+        sys.fanTemp = data.fanTemp || 38;
+        sys.fanSpeed = data.fanSpeed || 50;
+        sys.heatProtect = data.heatProtect || 58;
+        sys.channelCount = data.channelCount || 8;
+        saveToLocal('coralLightSystem', sys);
+        alert('读取系统数据成功！');
+    } catch (error) {
+        console.error('读取系统数据失败:', error);
+        alert('读取系统数据失败，请检查ESP8266是否在线！');
+    }
+}
+
+// 发送路由器配置
+async function sendRouterData(){
+    try {
+        const routerData = {
+            ssid: document.getElementById('routerName').value,
+            password: document.getElementById('routerPwd').value
+        };
+        const response = await fetch(`http://${ESP_IP}/setRouter`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(routerData)
+        });
+        const result = await response.json();
+        if(result.success){
+            // 保存到本地
+            const sys = getFromLocal('coralLightSystem', defaultSystemSettings);
+            sys.routerName = routerData.ssid;
+            sys.routerPwd = routerData.password;
+            saveToLocal('coralLightSystem', sys);
+            alert('路由器配置发送成功！ESP8266将重启连接新WiFi');
+        }else{
+            alert('路由器配置发送失败：' + result.msg);
+        }
+    } catch (error) {
+        console.error('发送路由器数据失败:', error);
+        alert('发送路由器数据失败，请检查ESP8266是否在线！');
+    }
+}
+</script>
+</body>
 </html>
