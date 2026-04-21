@@ -1,11 +1,206 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>PakePlus</title>
-    </head>
-    <body>
-        PakePlus
-    </body>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>水族灯8路控制器</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#121212;color:#fff;font-family:Arial;padding:10px}
+    .tab{display:flex;gap:5px;margin:10px 0;flex-wrap:wrap}
+    .tab button{flex:1;padding:10px;background:#333;color:#fff;border:none;border-radius:5px}
+    .tab button.active{background:#0099ff}
+    .page{display:none}
+    .page.show{display:block}
+    .card{background:#222;border-radius:8px;padding:12px;margin:8px 0}
+    .slider{width:100%;height:38px;margin:5px 0;background:#333}
+    .btn{background:#0099ff;color:#000;padding:10px;margin:5px 0;width:100%;border:none;border-radius:5px;font-weight:bold}
+    .btn2{background:#444;color:#fff;padding:8px;margin:3px;width:48%;border:none;border-radius:5px}
+    input{width:100%;padding:10px;margin:5px 0;background:#333;color:#fff;border:1px solid #555;border-radius:5px}
+    h3{color:#0099ff;margin-bottom:10px}
+    .name-box{margin-bottom:10px}
+  </style>
+</head>
+<body>
+
+<div class="tab">
+  <button onclick="go(0)" class="active">手动控制</button>
+  <button onclick="go(1)">自动模式</button>
+  <button onclick="go(2)">预设保存</button>
+  <button onclick="go(3)">通道命名</button>
+  <button onclick="go(4)">配网设置</button>
+</div>
+
+<!-- 手动控制 -->
+<div class="page show" id="p0">
+  <h3>8路通道手动调节</h3>
+  <div id="channelList"></div>
+</div>
+
+<!-- 自动模式 -->
+<div class="page" id="p1">
+  <h3>日出日落自动控制</h3>
+  <div class="card">
+    <p>日出时间（小时）</p>
+    <input type="number" id="riseH" value="6" min="0" max="23">
+    <p>日落时间（小时）</p>
+    <input type="number" id="setH" value="18" min="0" max="23">
+    <button class="btn" onclick="setAuto(1)">开启自动模式</button>
+    <button class="btn" onclick="setAuto(0)">关闭自动模式</button>
+  </div>
+</div>
+
+<!-- 预设保存 -->
+<div class="page" id="p2">
+  <h3>4组预设保存/加载</h3>
+  <div class="card">
+    <button class="btn2" onclick="save(0)">保存预设1</button>
+    <button class="btn2" onclick="load(0)">加载预设1</button><br>
+    <button class="btn2" onclick="save(1)">保存预设2</button>
+    <button class="btn2" onclick="load(1)">加载预设2</button><br>
+    <button class="btn2" onclick="save(2)">保存预设3</button>
+    <button class="btn2" onclick="load(2)">加载预设3</button><br>
+    <button class="btn2" onclick="save(3)">保存预设4</button>
+    <button class="btn2" onclick="load(3)">加载预设4</button>
+  </div>
+</div>
+
+<!-- 通道命名 -->
+<div class="page" id="p3">
+  <h3>自定义通道颜色名称</h3>
+  <input id="newName" placeholder="输入名称：如正白/蓝/紫/暖白">
+  <div class="name-box">
+    <button class="btn2" onclick="setName(0)">通道1</button>
+    <button class="btn2" onclick="setName(1)">通道2</button>
+    <button class="btn2" onclick="setName(2)">通道3</button>
+    <button class="btn2" onclick="setName(3)">通道4</button>
+    <button class="btn2" onclick="setName(4)">通道5</button>
+    <button class="btn2" onclick="setName(5)">通道6</button>
+    <button class="btn2" onclick="setName(6)">通道7</button>
+    <button class="btn2" onclick="setName(7)">通道8</button>
+  </div>
+</div>
+
+<!-- 配网 -->
+<div class="page" id="p4">
+  <h3>连接家庭路由器</h3>
+  <input id="wifiName" placeholder="WiFi名称">
+  <input id="wifiPass" placeholder="WiFi密码">
+  <button class="btn" onclick="sendWiFi()">保存并连接</button>
+  <p id="msg"></p>
+</div>
+
+<script>
+  let pages = document.querySelectorAll('.page');
+  let tabs = document.querySelectorAll('.tab button');
+  let data = {
+    names: ["ESP指示灯","通道2","通道3","通道4","通道5","通道6","通道7","通道8"],
+    values: [0,0,0,0,0,0,0,0]
+  };
+  let ip = "192.168.4.1";
+  let isRefreshing = false;
+
+  // 页面切换
+  function go(i){
+    pages.forEach(p=>p.classList.remove('show'));
+    tabs.forEach(t=>t.classList.remove('active'));
+    pages[i].classList.add('show');
+    tabs[i].classList.add('active');
+  }
+
+  // 渲染滑块
+  function render(){
+    let html = '';
+    for(let i=0;i<8;i++){
+      let val = data.values[i] || 0;
+      let name = data.names[i] || '通道'+(i+1);
+      html+=`
+      <div class="card">
+        <p>${name}</p>
+        <input type="range" class="slider" min="0" max="100" value="${val}" 
+          oninput="liveSet(${i},this.value)">
+        <span id="v${i}">${val}%</span>
+      </div>`;
+    }
+    document.getElementById("channelList").innerHTML = html;
+  }
+
+  // 实时滑动（丝滑）
+  function liveSet(ch, val){
+    data.values[ch] = val;
+    document.getElementById(`v${ch}`).innerText = val + "%";
+    
+    // 通道1 实时控制指示灯（最关键！）
+    if(ch == 0){
+      sendSet(0, val);
+    }
+  }
+
+  // 发送数据
+  function sendSet(ch, val){
+    fetch(`http://${ip}/set?ch=${ch}&v=${val}`).catch(e=>{});
+  }
+
+  // 获取数据
+  async function get(){
+    if(isRefreshing) return;
+    isRefreshing = true;
+    try{
+      let res = await fetch(`http://${ip}/get`);
+      data = await res.json();
+      render();
+    }catch(e){
+      render();
+    }
+    isRefreshing = false;
+  }
+
+  // 保存预设
+  async function save(n){
+    await fetch(`http://${ip}/save?n=${n}`);
+    alert("预设"+(n+1)+" 已保存");
+  }
+
+  // 加载预设
+  async function load(n){
+    await fetch(`http://${ip}/load?n=${n}`);
+    await get();
+    alert("预设"+(n+1)+" 已加载");
+  }
+
+  // 自动模式
+  async function setAuto(en){
+    let rh = document.getElementById('riseH').value;
+    let sh = document.getElementById('setH').value;
+    await fetch(`http://${ip}/auto?en=${en}&rh=${rh}&sh=${sh}`);
+    alert(en?"自动模式已开启":"自动模式已关闭");
+  }
+
+  // 通道命名
+  async function setName(ch){
+    let name = document.getElementById('newName').value;
+    if(!name){
+      alert("请输入名称");
+      return;
+    }
+    data.names[ch] = name;
+    render();
+    await fetch(`http://${ip}/name?ch=${ch}&name=${name}`);
+    alert("通道"+(ch+1)+" 名称已修改");
+  }
+
+  // 配网
+  async function sendWiFi(){
+    let ssid = document.getElementById('wifiName').value;
+    let pass = document.getElementById('wifiPass').value;
+    await fetch(`http://${ip}/wifi?ssid=${ssid}&pass=${pass}`);
+    document.getElementById('msg').innerText = "✅ WiFi已保存，正在连接...";
+  }
+
+  // 初始化
+  render();
+  get();
+  setInterval(get, 1200);
+</script>
+</body>
 </html>
